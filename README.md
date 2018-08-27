@@ -6,13 +6,16 @@ This project was created with [Create React App](https://github.com/facebookincu
 
 ## Setup
 ```
+npm install
 npm start
 ```
 
 ## Web Form
 
-Form was designed with [Bootstrap](https://react-bootstrap.github.io/)
+![alt text](https://imgur.com/CsLAsFz "Screenshot")
 
+
+Form was designed with [Bootstrap](https://react-bootstrap.github.io/)
 
 * before - milliseconds (e.g. 1496275200000)
 * after - milliseconds (e.g. 1496304000000)
