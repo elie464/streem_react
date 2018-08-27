@@ -1,10 +1,16 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
-import './App.css';
-import './styles/ui.css'
+
 import { FormGroup, ControlLabel, FormControl, Button, ListGroup, ListGroupItem } from 'react-bootstrap';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { NotificationContainer, NotificationManager } from 'react-notifications';
 import update from 'immutability-helper'
+import BarChartComponent from './components/bar_chart';
+
+import { HISTOGRAM_URL } from './constants/app_constants';
+
+import './styles/ui.css'
+import 'react-notifications/lib/notifications.css';
+import './App.css';
 
 class App extends Component {
   constructor(props) {
@@ -14,9 +20,9 @@ class App extends Component {
       urls: [],
       data: [],
       times: [],
-      interval: null,
-      before: null,
-      after: null
+      interval: "",
+      before: "",
+      after: ""
     }
   }
 
@@ -30,34 +36,35 @@ class App extends Component {
     ));
   }
 
-  handleSubmit(e){
+  handleSubmit(e) {
     e.preventDefault();
     this.setState({querying: true});
-    const histogram_url = "http://localhost:3001/histogram";
-    let page_urls = this.build_page_urls();
-    fetch(histogram_url + "?" +
+    let pageUrls = this.handlePageUrlParams();
+    fetch(HISTOGRAM_URL + "?" +
       "before=" + this.state.before +
       "&after=" + this.state.after +
       "&interval=" + this.state.interval +
-      page_urls)
+      pageUrls)
       .then((response) => {
-        if (response.status === 200) {
+        if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Something went wrong');
+          throw new Error(response.statusText);
         }
       })
       .then((responseJson) => {
         this.setState({
-          data: this.build_data(responseJson)
+          data: this.handleData(responseJson)
         });
+        console.log("changed data");
       })
       .catch((error) => {
-        console.log(error)
+        NotificationManager.error('Error', error.message);
       });
+    this.setState({querying: false});
   }
 
-  build_page_urls(){
+  handlePageUrlParams(){
     var out = "";
     for(var i=0; i < this.state.urls.length; i++) {
       out = out.concat("&page_url[]=" + this.state.urls[i])
@@ -66,7 +73,7 @@ class App extends Component {
     return out;
   }
 
-  build_data(result) {
+  handleData(result) {
     let data = [];
     result['aggregations']['time']['buckets'].map((bucket) => {
       let time = this.getTime(bucket['key_as_string']);
@@ -104,22 +111,6 @@ class App extends Component {
     this.setState({urls: new_urls});
   }
 
-  renderBarChart(){
-    return(
-      <BarChart width={600} height={300} data={this.state.data}
-                margin={{top: 20, right: 30, left: 20, bottom: 5}}>
-        <CartesianGrid strokeDasharray="3 3"/>
-        <XAxis dataKey="name"/>
-        <YAxis/>
-        <Tooltip/>
-        <Legend />
-        {this.state.urls.map((url, index) => (
-          <Bar key={index} dataKey={url} stackId="a" fill={this.getRandomColor()} />
-        ))}
-      </BarChart>
-    )
-  }
-
   renderUrls(){
     return (
       <div>
@@ -132,15 +123,6 @@ class App extends Component {
         </ListGroup>
       </div>
     )
-  }
-
-  getRandomColor() {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
   }
 
   render() {
@@ -168,17 +150,19 @@ class App extends Component {
                 </FormGroup>
                 <FormGroup>
                   <ControlLabel>Urls</ControlLabel>
+                  <p>Enter to add, Click to remove</p>
                   <FormControl type="text" onKeyPress={this.handleAddUrl.bind(this)} />
                 </FormGroup>
                 {this.renderUrls()}
-                <Button className="btn-primary" onClick={this.handleSubmit.bind(this)}>Submit</Button>
+                <Button className="btn-primary" onClick={this.handleSubmit.bind(this)} disabled={this.state.querying}>Submit</Button>
               </form>
             </div>
             <div className="col-md-9">
-              {this.renderBarChart()}
+              <BarChartComponent key="barchart" urls={this.state.urls} data={this.state.data} />
             </div>
           </div>
         </div>
+        <NotificationContainer/>
       </div>
     );
   }
