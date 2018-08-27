@@ -12,7 +12,7 @@ npm start
 
 ## Web Form
 
-![alt text](https://imgur.com/CsLAsFz "Screenshot")
+![alt text](https://imgur.com/CsLAsFz.png "Screenshot")
 
 
 Form was designed with [Bootstrap](https://react-bootstrap.github.io/)
